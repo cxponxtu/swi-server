@@ -3,133 +3,649 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Drone Detection Dashboard</title>
+    <title>MOSCOW - Anti-Drone Detection System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background-color: #121212;
-            color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .dashboard {
-            width: 80%;
-            max-width: 600px;
-            text-align: center;
-        }
-        h1 {
-            color: #ffffff;
-            border-bottom: 2px solid #444;
-            padding-bottom: 10px;
-        }
-        .status-box {
-            padding: 20px;
-            border-radius: 8px;
-            font-size: 2em;
-            font-weight: bold;
-            margin: 20px 0;
-            transition: background-color 0.5s, color 0.5s;
-        }
-        .SAFE { background-color: #2e7d32; color: white; }
-        .SUSPICIOUS { background-color: #f9a825; color: black; }
-        .TRACKING { background-color: #c62828; color: white; }
-        .UNKNOWN { background-color: #37474f; color: white; }
 
-        .data-grid {
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1d3a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .project-header {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .project-title {
+            font-size: 0.85em;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+
+        .course-name {
+            font-size: 1.1em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .team-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1em;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 15px rgba(198, 40, 40, 0.4);
+            margin-top: 5px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #c62828 100%);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #a0a0a0;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 968px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .status-panel {
+            grid-column: 1 / -1;
+        }
+
+        .status-box {
+            padding: 40px;
+            border-radius: 12px;
+            font-size: 3em;
+            font-weight: 800;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+
+        .SAFE { 
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            color: white;
+            box-shadow: 0 0 40px rgba(46, 125, 50, 0.6);
+        }
+        
+        .SUSPICIOUS { 
+            background: linear-gradient(135deg, #f9a825 0%, #f57f17 100%);
+            color: #1a1a1a;
+            box-shadow: 0 0 40px rgba(249, 168, 37, 0.6);
+        }
+        
+        .TRACKING { 
+            background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+            color: white;
+            box-shadow: 0 0 40px rgba(198, 40, 40, 0.6);
+            animation: alert-pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes alert-pulse {
+            0%, 100% { box-shadow: 0 0 40px rgba(198, 40, 40, 0.6); }
+            50% { box-shadow: 0 0 60px rgba(198, 40, 40, 0.9); }
+        }
+        
+        .UNKNOWN { 
+            background: linear-gradient(135deg, #37474f 0%, #263238 100%);
+            color: white;
+        }
+
+        .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px;
             margin-top: 20px;
         }
-        .data-card {
-            background-color: #1e1e1e;
+
+        .metric-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
             padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: scale(1.05);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .metric-label {
+            color: #a0a0a0;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .panel-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .history-table th {
+            background: rgba(102, 126, 234, 0.2);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #667eea;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.4);
+        }
+
+        .history-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .history-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .connected {
+            background: rgba(46, 125, 50, 0.3);
+            color: #4caf50;
+            border: 1px solid #4caf50;
+        }
+
+        .disconnected {
+            background: rgba(198, 40, 40, 0.3);
+            color: #ef5350;
+            border: 1px solid #ef5350;
+        }
+
+        .stats-mini {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.02);
             border-radius: 8px;
-            border: 1px solid #333;
         }
-        .data-card h3 {
-            margin: 0 0 10px 0;
-            color: #bb86fc;
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
         }
-        .data-card p {
-            font-size: 1.8em;
-            margin: 0;
-            font-weight: 300;
+
+        .stat-item-label {
+            font-size: 0.75em;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-item-value {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.85em;
+            color: #a0a0a0;
+        }
+
+        .weapon-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <h1>Drone Detection System</h1>
-    <div id="status-box" class="status-box UNKNOWN">
-        <span id="state">CONNECTING...</span>
+<div class="container">
+    <div class="project-header">
+        <div class="project-title">Mini Project</div>
+        <div class="course-name">Smart and Wireless Instrumentation</div>
+        <div class="team-badge">⚡ TEAM MOSCOW ⚡</div>
     </div>
-    <div class="data-grid">
-        <div class="data-card">
-            <h3>Distance</h3>
-            <p><span id="distance">--</span> m</p>
+
+    <header>
+        <div class="weapon-icon">🎯 🛡️ 📡</div>
+        <h1>ANTI-DRONE WEAPONRY SYSTEM</h1>
+        <p class="subtitle">Autonomous Drone Detection & Threat Assessment</p>
+        <span id="connection-status" class="connection-status disconnected">● DISCONNECTED</span>
+    </header>
+
+    <div class="main-grid">
+        <div class="panel status-panel">
+            <div id="status-box" class="status-box UNKNOWN">
+                <span id="state">INITIALIZING...</span>
+            </div>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">📏 Distance</div>
+                    <div class="metric-value"><span id="distance">--</span> m</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">⚡ Velocity</div>
+                    <div class="metric-value"><span id="velocity">--</span> m/s</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">📶 RF Power</div>
+                    <div class="metric-value"><span id="rf_power">--</span> dBm</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">📊 RF Stability</div>
+                    <div class="metric-value" id="rf_stability">--</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">⚠️ Threat Score</div>
+                    <div class="metric-value" id="score">--</div>
+                </div>
+            </div>
         </div>
-        <div class="data-card">
-            <h3>Velocity</h3>
-            <p><span id="velocity">--</span> m/s</p>
+
+        <div class="panel">
+            <div class="panel-title">📈 Distance Timeline</div>
+            <div class="chart-container">
+                <canvas id="distanceChart"></canvas>
+            </div>
         </div>
-        <div class="data-card">
-            <h3>RF Power</h3>
-            <p><span id="rf_power">--</span> dBm</p>
+
+        <div class="panel">
+            <div class="panel-title">🎯 Threat Score Analysis</div>
+            <div class="chart-container">
+                <canvas id="scoreChart"></canvas>
+            </div>
         </div>
-        <div class="data-card">
-            <h3>RF Stability</h3>
-            <p><span id="rf_stability">--</span></p>
-        </div>
-        <div class="data-card">
-            <h3>Threat Score</h3>
-            <p><span id="score">--</span></p>
+
+        <div class="panel" style="grid-column: 1 / -1;">
+            <div class="panel-title">📋 Detection History & Statistics</div>
+            <div class="stats-mini">
+                <div class="stat-item">
+                    <div class="stat-item-label">🔍 Total Detections</div>
+                    <div class="stat-item-value" id="total-detections">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">✅ Safe Events</div>
+                    <div class="stat-item-value" id="safe-count" style="color: #4caf50;">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">⚠️ Suspicious Events</div>
+                    <div class="stat-item-value" id="suspicious-count" style="color: #f9a825;">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">🚨 Tracking Events</div>
+                    <div class="stat-item-value" id="tracking-count" style="color: #ef5350;">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-item-label">⏱️ Avg Response Time</div>
+                    <div class="stat-item-value" id="avg-response">2.0s</div>
+                </div>
+            </div>
+            <div style="overflow-x: auto; margin-top: 20px;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>⏰ Timestamp</th>
+                            <th>🚦 Status</th>
+                            <th>📏 Distance</th>
+                            <th>⚡ Velocity</th>
+                            <th>📶 RF Power</th>
+                            <th>🎯 Threat Score</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        <tr><td colspan="6" style="text-align: center; color: #666; padding: 30px;">⏳ Awaiting detection data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <footer>
+        <strong>Team MOSCOW</strong> | Anti-Drone Weaponry System<br>
+        Smart and Wireless Instrumentation Mini Project<br>
+        <small>Real-time Drone Detection & Tracking Dashboard v2.0</small>
+    </footer>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const statusBox = document.getElementById('status-box');
-        const stateEl = document.getElementById('state');
-        const distanceEl = document.getElementById('distance');
-        const velocityEl = document.getElementById('velocity');
-        const rfPowerEl = document.getElementById('rf_power');
-        const rfStabilityEl = document.getElementById('rf_stability');
-        const scoreEl = document.getElementById('score');
+    // Historical data storage
+    const historyData = {
+        timestamps: [],
+        distances: [],
+        scores: [],
+        states: []
+    };
 
-        async function fetchData() {
-            try {
-                // This fetch request asks our Python server for the latest data
-                const response = await fetch('/data');
-                const data = await response.json();
+    const MAX_HISTORY = 50;
+    let stateCount = { SAFE: 0, SUSPICIOUS: 0, TRACKING: 0 };
 
-                // Update the text content of all the elements
-                distanceEl.textContent = data.distance;
-                velocityEl.textContent = data.velocity;
-                rfPowerEl.textContent = data.rf_power;
-                rfStabilityEl.textContent = data.rf_stability;
-                scoreEl.textContent = data.score;
-                stateEl.textContent = data.state;
-
-                // Update the class of the status box to change its color
-                statusBox.className = 'status-box ' + data.state;
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-                stateEl.textContent = "DISCONNECTED";
-                statusBox.className = 'status-box UNKNOWN';
+    // Chart setup with theme colors
+    const chartConfig = {
+        type: 'line',
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#667eea',
+                    bodyColor: '#e0e0e0',
+                    borderColor: '#667eea',
+                    borderWidth: 1
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a0a0a0', maxTicksLimit: 8 }
+                },
+                y: {
+                    display: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#a0a0a0' }
+                }
             }
         }
+    };
 
-        // Fetch new data from the server every 2 seconds
-        setInterval(fetchData, 2000);
-        fetchData(); // Fetch immediately on page load
+    const distanceChart = new Chart(document.getElementById('distanceChart'), {
+        ...chartConfig,
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Distance (m)',
+                data: [],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        }
     });
+
+    const scoreChart = new Chart(document.getElementById('scoreChart'), {
+        ...chartConfig,
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Threat Score',
+                data: [],
+                borderColor: '#c62828',
+                backgroundColor: 'rgba(198, 40, 40, 0.1)',
+                tension: 0.4,
+                fill: true,
+                borderWidth: 2,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }]
+        }
+    });
+
+    function updateCharts() {
+        distanceChart.data.labels = historyData.timestamps;
+        distanceChart.data.datasets[0].data = historyData.distances;
+        distanceChart.update('none');
+
+        scoreChart.data.labels = historyData.timestamps;
+        scoreChart.data.datasets[0].data = historyData.scores;
+        scoreChart.update('none');
+    }
+
+    function addToHistory(data) {
+        const now = new Date();
+        const timestamp = now.toLocaleTimeString();
+
+        historyData.timestamps.push(timestamp);
+        historyData.distances.push(parseFloat(data.distance) || 0);
+        historyData.scores.push(parseFloat(data.score) || 0);
+        historyData.states.push(data.state);
+
+        if (historyData.timestamps.length > MAX_HISTORY) {
+            historyData.timestamps.shift();
+            historyData.distances.shift();
+            historyData.scores.shift();
+            historyData.states.shift();
+        }
+
+        // Update state counts
+        if (data.state === 'SAFE' || data.state === 'SUSPICIOUS' || data.state === 'TRACKING') {
+            stateCount[data.state]++;
+        }
+
+        // Update history table
+        const tbody = document.getElementById('history-body');
+        
+        // Remove placeholder if it exists
+        if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
+            tbody.deleteRow(0);
+        }
+        
+        const row = tbody.insertRow(0);
+        
+        // Color code the state
+        let stateColor = '#999';
+        if (data.state === 'SAFE') stateColor = '#4caf50';
+        else if (data.state === 'SUSPICIOUS') stateColor = '#f9a825';
+        else if (data.state === 'TRACKING') stateColor = '#ef5350';
+        
+        row.innerHTML = `
+            <td>${timestamp}</td>
+            <td><strong style="color: ${stateColor}">${data.state}</strong></td>
+            <td>${data.distance} m</td>
+            <td>${data.velocity} m/s</td>
+            <td>${data.rf_power} dBm</td>
+            <td><strong>${data.score}</strong></td>
+        `;
+
+        // Keep only last 20 rows
+        while (tbody.rows.length > 20) {
+            tbody.deleteRow(tbody.rows.length - 1);
+        }
+
+        // Update statistics
+        document.getElementById('total-detections').textContent = historyData.timestamps.length;
+        document.getElementById('safe-count').textContent = stateCount.SAFE;
+        document.getElementById('suspicious-count').textContent = stateCount.SUSPICIOUS;
+        document.getElementById('tracking-count').textContent = stateCount.TRACKING;
+
+        updateCharts();
+    }
+
+    async function fetchData() {
+        try {
+            const response = await fetch('/data');
+            const data = await response.json();
+
+            document.getElementById('distance').textContent = data.distance;
+            document.getElementById('velocity').textContent = data.velocity;
+            document.getElementById('rf_power').textContent = data.rf_power;
+            document.getElementById('rf_stability').textContent = data.rf_stability;
+            document.getElementById('score').textContent = data.score;
+            document.getElementById('state').textContent = data.state;
+
+            const statusBox = document.getElementById('status-box');
+            statusBox.className = 'status-box ' + data.state;
+
+            const connectionStatus = document.getElementById('connection-status');
+            connectionStatus.className = 'connection-status connected';
+            connectionStatus.textContent = '● CONNECTED';
+
+            addToHistory(data);
+
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            document.getElementById('state').textContent = "DISCONNECTED";
+            document.getElementById('status-box').className = 'status-box UNKNOWN';
+            
+            const connectionStatus = document.getElementById('connection-status');
+            connectionStatus.className = 'connection-status disconnected';
+            connectionStatus.textContent = '● DISCONNECTED';
+        }
+    }
+
+    setInterval(fetchData, 2000);
+    fetchData();
 </script>
 
 </body>
