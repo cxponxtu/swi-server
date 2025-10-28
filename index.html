@@ -333,6 +333,29 @@
             color: #667eea;
         }
 
+        .clear-button {
+            float: right;
+            background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(198, 40, 40, 0.3);
+        }
+
+        .clear-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(198, 40, 40, 0.5);
+        }
+
+        .clear-button:active {
+            transform: translateY(0);
+        }
+
         footer {
             text-align: center;
             margin-top: 30px;
@@ -412,6 +435,7 @@
 
         <div class="panel" style="grid-column: 1 / -1;">
             <div class="panel-title">📋 Detection History & Statistics</div>
+            <button id="clear-btn" class="clear-button">🗑️ Clear History</button>
             <div class="stats-mini">
                 <div class="stat-item">
                     <div class="stat-item-label">🔍 Total Detections</div>
@@ -472,6 +496,41 @@
 
     const MAX_HISTORY = 50;
     let stateCount = { SAFE: 0, SUSPICIOUS: 0, TRACKING: 0 };
+    let lastUpdateTime = 0;
+
+    // Clear button handler
+    document.getElementById('clear-btn').addEventListener('click', async () => {
+        if (confirm('Are you sure you want to clear all history data?')) {
+            try {
+                await fetch('/clear', { method: 'POST' });
+                
+                // Clear local data
+                historyData.timestamps = [];
+                historyData.distances = [];
+                historyData.scores = [];
+                historyData.states = [];
+                stateCount = { SAFE: 0, SUSPICIOUS: 0, TRACKING: 0 };
+                
+                // Clear table
+                const tbody = document.getElementById('history-body');
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 30px;">⏳ Awaiting detection data...</td></tr>';
+                
+                // Reset statistics
+                document.getElementById('total-detections').textContent = '0';
+                document.getElementById('safe-count').textContent = '0';
+                document.getElementById('suspicious-count').textContent = '0';
+                document.getElementById('tracking-count').textContent = '0';
+                
+                // Update charts
+                updateCharts();
+                
+                alert('✅ History cleared successfully!');
+            } catch (error) {
+                console.error('Error clearing history:', error);
+                alert('❌ Failed to clear history');
+            }
+        }
+    });
 
     // Chart setup with theme colors
     const chartConfig = {
@@ -617,6 +676,7 @@
             const response = await fetch('/data');
             const data = await response.json();
 
+            // Update display
             document.getElementById('distance').textContent = data.distance;
             document.getElementById('velocity').textContent = data.velocity;
             document.getElementById('rf_power').textContent = data.rf_power;
@@ -631,7 +691,11 @@
             connectionStatus.className = 'connection-status connected';
             connectionStatus.textContent = '● CONNECTED';
 
-            addToHistory(data);
+            // Only add to history if data has timestamp (meaning it came from /update)
+            if (data.last_update_time && data.last_update_time !== lastUpdateTime) {
+                lastUpdateTime = data.last_update_time;
+                addToHistory(data);
+            }
 
         } catch (error) {
             console.error("Error fetching data:", error);

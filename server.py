@@ -10,7 +10,8 @@ latest_data = {
     "rf_power": "N/A",
     "rf_stability": "N/A",
     "score": "N/A",
-    "state": "UNKNOWN"
+    "state": "UNKNOWN",
+    "last_update_time": None
 }
 
 # Store historical data (last 100 records)
@@ -33,22 +34,29 @@ def update_data():
     if not data:
         return jsonify({"status": "error", "message": "No data received"}), 400
     
-    print(f"[{datetime.now().strftime('%H:%M:%S')}] Received data: {data}")
+    # Create timestamp
+    now = datetime.now()
+    timestamp = now.isoformat()
+    update_time = now.timestamp()
     
-    # Update latest data
-    latest_data = data
+    print(f"[{now.strftime('%H:%M:%S')}] Received data: {data}")
+    
+    # Update latest data with timestamp
+    latest_data = {**data, "last_update_time": update_time}
     
     # Add to history with timestamp
     history_entry = {
         **data,
-        "timestamp": datetime.now().isoformat()
+        "timestamp": timestamp,
+        "update_time": update_time
     }
     history.append(history_entry)
     
     return jsonify({
         "status": "success", 
         "message": "Data received and stored",
-        "records_stored": len(history)
+        "records_stored": len(history),
+        "timestamp": timestamp
     })
 
 @app.route('/data', methods=['GET'])
@@ -128,12 +136,25 @@ def get_stats():
 @app.route('/clear', methods=['POST'])
 def clear_history():
     # Clear all historical data (useful for testing)
-    global history
+    global history, latest_data
     history.clear()
+    
+    # Reset latest_data to initial state
+    latest_data = {
+        "distance": "N/A",
+        "velocity": "N/A",
+        "rf_power": "N/A",
+        "rf_stability": "N/A",
+        "score": "N/A",
+        "state": "UNKNOWN",
+        "last_update_time": None
+    }
+    
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] History cleared")
     
     return jsonify({
         "status": "success",
-        "message": "History cleared"
+        "message": "History cleared successfully"
     })
 
 @app.route('/health', methods=['GET'])
