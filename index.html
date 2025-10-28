@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Drone Detection Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .dashboard {
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        h1 {
+            color: #ffffff;
+            border-bottom: 2px solid #444;
+            padding-bottom: 10px;
+        }
+        .status-box {
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 2em;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        .SAFE { background-color: #2e7d32; color: white; }
+        .SUSPICIOUS { background-color: #f9a825; color: black; }
+        .TRACKING { background-color: #c62828; color: white; }
+        .UNKNOWN { background-color: #37474f; color: white; }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .data-card {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .data-card h3 {
+            margin: 0 0 10px 0;
+            color: #bb86fc;
+        }
+        .data-card p {
+            font-size: 1.8em;
+            margin: 0;
+            font-weight: 300;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <h1>Drone Detection System</h1>
+    <div id="status-box" class="status-box UNKNOWN">
+        <span id="state">CONNECTING...</span>
+    </div>
+    <div class="data-grid">
+        <div class="data-card">
+            <h3>Distance</h3>
+            <p><span id="distance">--</span> m</p>
+        </div>
+        <div class="data-card">
+            <h3>Velocity</h3>
+            <p><span id="velocity">--</span> m/s</p>
+        </div>
+        <div class="data-card">
+            <h3>RF Power</h3>
+            <p><span id="rf_power">--</span> dBm</p>
+        </div>
+        <div class="data-card">
+            <h3>RF Stability</h3>
+            <p><span id="rf_stability">--</span></p>
+        </div>
+        <div class="data-card">
+            <h3>Threat Score</h3>
+            <p><span id="score">--</span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const statusBox = document.getElementById('status-box');
+        const stateEl = document.getElementById('state');
+        const distanceEl = document.getElementById('distance');
+        const velocityEl = document.getElementById('velocity');
+        const rfPowerEl = document.getElementById('rf_power');
+        const rfStabilityEl = document.getElementById('rf_stability');
+        const scoreEl = document.getElementById('score');
+
+        async function fetchData() {
+            try {
+                // This fetch request asks our Python server for the latest data
+                const response = await fetch('/data');
+                const data = await response.json();
+
+                // Update the text content of all the elements
+                distanceEl.textContent = data.distance;
+                velocityEl.textContent = data.velocity;
+                rfPowerEl.textContent = data.rf_power;
+                rfStabilityEl.textContent = data.rf_stability;
+                scoreEl.textContent = data.score;
+                stateEl.textContent = data.state;
+
+                // Update the class of the status box to change its color
+                statusBox.className = 'status-box ' + data.state;
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                stateEl.textContent = "DISCONNECTED";
+                statusBox.className = 'status-box UNKNOWN';
+            }
+        }
+
+        // Fetch new data from the server every 2 seconds
+        setInterval(fetchData, 2000);
+        fetchData(); // Fetch immediately on page load
+    });
+</script>
+
+</body>
+</html>
